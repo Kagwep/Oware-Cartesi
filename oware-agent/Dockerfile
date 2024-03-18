@@ -17,6 +17,10 @@ EOF
 ENV PATH="/opt/cartesi/bin:${PATH}"
 
 WORKDIR /opt/cartesi/dapp
+
+# Upgrade pip
+RUN pip install --no-cache-dir --upgrade pip
+
 COPY ./requirements.txt .
 
 RUN <<EOF
