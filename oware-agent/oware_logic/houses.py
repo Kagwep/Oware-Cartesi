@@ -4,7 +4,6 @@ from colorama import Style
 
 colorama_init()
 
-
 class Houses:
 
     def __init__(self):

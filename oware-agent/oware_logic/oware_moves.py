@@ -104,6 +104,7 @@ class OwareMoves(object):
         return moves
 
     def legal_moves_generator(self,game_state,player):
+        
         current_board_state,player_turn = game_state.board_state, game_state.players_turn
         self.player_turn = player_turn
 
