@@ -93,7 +93,7 @@ class OwareMoves(object):
                 if selected_row == 1:
                     moves[(selected_row, col)] = np.array([original_path[6:12][::-1],original_path[0:6]]).flatten()
                 else:
-                    print(original_path)
+                 
                     moves[(selected_row, col)] = np.array([original_path[0:6][::-1],original_path[6:12]]).flatten()
 
                 original_path = copy.deepcopy(result_move_path)
@@ -104,7 +104,6 @@ class OwareMoves(object):
         return moves
 
     def legal_moves_generator(self,game_state,player):
-        
         current_board_state,player_turn = game_state.board_state, game_state.players_turn
         self.player_turn = player_turn
 
@@ -123,7 +122,6 @@ class OwareMoves(object):
 
         self.legal_moves_dict = moves
 
-        print(moves)
 
     def move_selector(self,model):
 
@@ -131,8 +129,34 @@ class OwareMoves(object):
 
             tracker={}
             for legal_move_coord in self.legal_moves_dict:
-                score=model.predict(self.legal_moves_dict[legal_move_coord].reshape(1,12))
+
+                input_data = np.array(self.legal_moves_dict[legal_move_coord]).reshape(1, 12).astype(np.float32)
+
+                model.allocate_tensors()
+
+                # Get input and output details
+                input_details = model.get_input_details()
+                output_details = model.get_output_details()
+
+                # Assuming legal_moves_dict is a dictionary containing legal move coordinates
+                # and reshaping the input data as needed
+                input_data = np.array(self.legal_moves_dict[legal_move_coord]).reshape(1, 12).astype(np.float32)
+
+                # Set input tensor
+                model.set_tensor(input_details[0]['index'], input_data)
+
+                # Run inference
+                model.invoke()
+
+                # Get output tensor
+                output_data = model.get_tensor(output_details[0]['index'])
+
+                score = output_data
+
+                print(score)
+                
                 tracker[legal_move_coord]=score
+
             selected_move=max(tracker, key=tracker.get)
             new_board_state=self.legal_moves_dict[selected_move]
             score=tracker[selected_move]

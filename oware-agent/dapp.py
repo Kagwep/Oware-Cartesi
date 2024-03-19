@@ -1,10 +1,13 @@
 from os import environ
 import logging
 import requests
-from tensorflow.python.keras.models import load_model
-from oware_logic import oware_moves,player,houses,state
+from oware_logic.oware_moves import OwareMoves
+from oware_logic.player import Player
+from oware_logic.state import State
+from oware_logic.houses import Houses
 import json
 import binascii
+import tflite_runtime.interpreter as tflite
 
 
 logging.basicConfig(level="INFO")
@@ -13,52 +16,45 @@ logger = logging.getLogger(__name__)
 rollup_server = environ["ROLLUP_HTTP_SERVER_URL"]
 logger.info(f"HTTP rollup_server url is {rollup_server}")
 
-agent_player = player.Player()
 
-agent_moves = oware_moves.OwareMoves()
+agent_moves = OwareMoves()
 
-model = load_model('model/oware-100.h5')
+model = tflite.Interpreter(model_path="./model/oware-model.tflite")
 
-game_houses =  houses.Houses()
+game_houses =  Houses()
 
 agent_oware_moves = []
 
 
-def get_agent_move(model,current_board_state_string,player_name):
+def get_agent_move(model,current_board_state,player_name):
 
 
     name = player_name
     player_houses = game_houses.houses_order[::-1][6:12] if name.lower() =='agent' else game_houses.houses_order[::-1][0:6] 
     captured = 0
 
-    agent = player.Player(name,player_houses,captured)
+    agent = Player(name,player_houses,captured)
 
     name = "opponent"
     player_houses =  game_houses.houses_order[::-1][0:6] if name.lower() =='agent' else game_houses.houses_order[::-1][6:12]
     captured = 0
 
-    player_one = player.Player(name,player_houses,captured)
+    player_one = Player(name,player_houses,captured)
 
     opponent_won = False
 
-    board = json.loads(current_board_state_string)
+    board = current_board_state
 
-    player_two = agent
+    player_two = agent 
     
 
-    game_state = state.State(True,player_one,player_two,agent.name,board)
+    game_state = State(True,player_one,player_two,agent.name,board)
 
     agent_moves.legal_moves_generator(game_state,agent)
 
     agent_move_selected = agent_moves.move_selector(model)
 
-    if len(agent_move_selected) == 3:
-            selected_move,new_board_state,score = agent_move_selected
-    else:
-        opponent_won = False
-
-    return selected_move,opponent_won,score
-
+    return agent_move_selected
 
 def handle_advance(data,model):
     logger.info(f"Received advance request data {data}")
@@ -88,11 +84,13 @@ def handle_advance(data,model):
     hex_result = ""
 
     try:
-        if JSON_payload.get("method") == "prime":
-            name = int(JSON_payload["args"]["name"])
-            board_state_string = int(JSON_payload["args"]["board_state"])
+        if JSON_payload.get("method") == "agent_move":
+            name = JSON_payload["args"]["name"]
+            board_state = JSON_payload["args"]["board_state"]
 
-            agent_oware_move = get_agent_move(model,board_state_string,name)
+            logger.info("the dict is : %s",board_state)
+
+            agent_oware_move = get_agent_move(model,board_state,name)
             
             agent_oware_moves.extend(agent_oware_move)
 

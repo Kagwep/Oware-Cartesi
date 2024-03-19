@@ -23,6 +23,8 @@ from keras.optimizers import SGD
 from coordinate_house_map import coordinates_houses_map
 from opponent_move_selector import capture_move_check
 
+import tensorflow as tf
+
 
 colorama_init()
 
@@ -274,7 +276,11 @@ while(game_counter<=500):
     game_counter+=1
 
  
-model.save('model/oware-500.h5')
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+tflite_model = converter.convert()
+
+with open("oware-model.tflite","wb") as f:
+      f.write(tflite_model)
 
     
 
