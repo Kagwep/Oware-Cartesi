@@ -152,8 +152,6 @@ class OwareMoves(object):
                 output_data = model.get_tensor(output_details[0]['index'])
 
                 score = output_data
-
-                print(score)
                 
                 tracker[legal_move_coord]=score
 

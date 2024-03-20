@@ -96,8 +96,11 @@ def handle_advance(data,model):
 
             logger.info("The agents move is: %s", agent_oware_move)
 
+            
+            agent_oware_move = str([agent_oware_move])
+
             url = rollup_server + "/notice"
-            hex_result = binascii.hexlify(json.dumps({"moves": [agent_oware_move]}).encode()).decode()
+            hex_result = binascii.hexlify(json.dumps({"moves": agent_oware_move}).encode()).decode()
 
         else:
             logger.info("Method is undefined")
@@ -129,10 +132,10 @@ def handle_inspect(data,model):
     try:
         payload_str = binascii.unhexlify(data['payload']).decode()
         
-        if payload_str == "primes":
-            hex_result = binascii.hexlify(json.dumps({"moves": agent_oware_moves}).encode()).decode()
+        if payload_str == "moves":
+            hex_result = binascii.hexlify(json.dumps({"moves": str(agent_oware_moves)}).encode()).decode()
         else:
-            hex_result = binascii.hexlify("This is a simple cartesi Dapp to find primes between two integers".encode()).decode()
+            hex_result = binascii.hexlify("Thisis a lite oware agent".encode()).decode()
 
     except Exception as e:
         logger.error("Error: %s", e)
@@ -140,6 +143,7 @@ def handle_inspect(data,model):
 
     # Post the result
     try:
+        logger.info("The hex result is: ",hex_result)
         response = requests.post(rollup_server + "/report", json={"payload": hex_result})
         if response.status_code == 200:
             logger.info("Report successfully added")
