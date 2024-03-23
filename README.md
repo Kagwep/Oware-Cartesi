@@ -166,7 +166,5 @@ Once the installation is complete, you can start the front-end server (assuming 
 
 ```
 
-## Conclusion
-
 This document an overview of the strategic gameplay AI agent implemented on Cartesi rollup, enabling secure and scalable deployment of AI-powered gameplay experiences.
 
