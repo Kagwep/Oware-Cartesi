@@ -1,4 +1,4 @@
-// Houses.ts
+// houses.ts
 
 import { seeds } from "./Seed";
 import { Seeds } from "./Seed";
@@ -9,11 +9,11 @@ export interface House {
     seeds:Seeds
   }
   
-  export interface Houses {
+  export interface houses {
     [key: string]: House;
   }
   
-  export const houses: Houses = {
+  export const houses: houses = {
     'house-1': { houseNumber: 1, seedsNumber: 4 ,seeds: seeds.slice(0,4)},
     'house-2': { houseNumber: 2, seedsNumber: 4 ,seeds:seeds.slice(4,8)},
     'house-3': { houseNumber: 3, seedsNumber: 4 ,seeds: seeds.slice(8,12)},
@@ -30,21 +30,21 @@ export interface House {
 
 export const housesToAccess:string[] = ['house-1', 'house-2', 'house-3', 'house-4', 'house-5', 'house-6', 'house-7', 'house-8', 'house-9', 'house-10', 'house-11', 'house-12'];
 
-export interface HouseMap {
+export interface houseMap {
   [key: string]: string;
 }
 
-export const housesCoordinates: HouseMap = {
-  '0,0': 'House-7',
-  '0,1': 'House-8',
-  '0,2': 'House-9',
-  '0,3': 'House-10',
-  '0,4': 'House-11',
-  '0,5': 'House-12',
-  '1,0': 'House-1',
-  '1,1': 'House-2',
-  '1,2': 'House-3',
-  '1,3': 'House-4',
-  '1,4': 'House-5',
-  '1,5': 'House-6',
+export const housesCoordinates: houseMap = {
+  '0,0': 'house-7',
+  '0,1': 'house-8',
+  '0,2': 'house-9',
+  '0,3': 'house-10',
+  '0,4': 'house-11',
+  '0,5': 'house-12',
+  '1,0': 'house-1',
+  '1,1': 'house-2',
+  '1,2': 'house-3',
+  '1,3': 'house-4',
+  '1,4': 'house-5',
+  '1,5': 'house-6',
 };

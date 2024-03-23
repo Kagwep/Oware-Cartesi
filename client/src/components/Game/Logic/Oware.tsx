@@ -133,7 +133,7 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
 
     const isWaitingForOpponent = false;
 
-    const createScene = async (canvas: HTMLCanvasElement | null): Promise<{ scene: Scene | undefined, defaultSpheres: () => void,moveSpheres: (move:Move) => void,playersTurn :string}> => {
+    const createScene = async (canvas: HTMLCanvasElement | null): Promise<{ scene: Scene | undefined, defaultSpheres: () => void,playersTurn :string}> => {
        
       if (!canvas) {
         // If canvas is null, return a promise with an object where scene is undefined
@@ -158,6 +158,8 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
 
         camera.setPosition(new Vector3(0.003763740788813662, 43.32877130120143, 9.1329997049811053));
 
+        let isPlayerTurn:boolean;
+
 
 
         camera.lowerAlphaLimit = camera.upperAlphaLimit = camera.alpha ;
@@ -175,6 +177,11 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
         // const board = SceneLoader.ImportMesh('','./models/','board.gltf',scene,(meshes) => {
         //   console.log('meshes',meshes)
         // })
+
+        const playerIcon = document.getElementById('player-icon');
+        if (playerIcon) {
+          playerIcon.innerHTML =  '&#128526;';
+        }
 
   
         
@@ -204,6 +211,8 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
         const {meshes:bulbMeshes} = await loadModels('bulb.gltf');
         // Now modelsResult contains the result directly
         console.log(meshes_capture);
+
+        console.log(meshes)
        
 
         const rootMesh = meshes_capture.find(mesh => mesh.name === '__root__');
@@ -248,6 +257,7 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
               }
               
           }
+
 
           
 
@@ -499,185 +509,39 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
 
           const agent_play = (agent_house_play_choice :string) => {
 
+
+
             const house = houses[agent_house_play_choice];
+
+            console.log(house)
 
             if (house) {
               // Print the position and seed number of the corresponding house
 
               const agent_seeds_on_hand = house.seeds
 
-              const meshClicked =  meshes.find((model) => model.name === housesToAccess[house.houseNumber-1]);
+              const agent_seeds_number = house.seedsNumber
+
+
+
+              const player = playersStates["player-2"];
               
+
+              player.onHand = house.seeds
+
+         
               house.seedsNumber = 0;
 
-              const mesh_picked_agent = 
-
-              const player = playersStates[player_identity];
+              const mesh_picked_agent = meshes.find((model) => model.id === agent_house_play_choice);
+              
 
              // console.log("remaining seed", numberOfSeedsPicked);
 
-              addSphereInsideMesh(clickedMesh,player.onHand[0].seedName);
+              //addSphereInsideMesh(meshClicked,player.onHand[0].seedName);
 
-              const seedAdded = player.onHand[0];
+              let current_house = agent_house_play_choice;
 
-              house.seeds.push(player.onHand[0]);
-              player.onHand.splice(0, 1);
-
-              player.previouseHouse = player.nextHouse[0];
-
-              const nextMove = () : string[] => {
-                 
-                  const indexOfCurrentHouse = housesToAccess.indexOf(clickedMesh.name);
-
-                  const indexOfNextHouse = indexOfCurrentHouse < 11 ? indexOfCurrentHouse + 1 : 0;
-
-                  const house = housesToAccess[indexOfNextHouse];
-
-                  return [house];
-              }
-
-
-             if (player.onHand.length === 0){
-
-              player.nextHouse= []
-              player.originalHouse =[]
-
-
-              const nextPlayer = player_identity === 'player-1' ? 'player-2' :'player-1';
-              
-              playing_next = nextPlayer;
-              start.player = playing_next ;
-              setPlayerTurn(playing_next);
-
-              material.diffuseColor = new Color3(1, 0, 0);
-              material.specularColor = new Color3(1, 1, 1);
-              // box.material = material;
-              if (bulb){
-                bulb.material = material;
-              }
-
-              const isPlayeerHouse =  playerHouses.includes(clickedMesh.name);
-
-              if (!isPlayeerHouse && (house.seeds.length === 2 || house.seeds.length === 3)){
-
-                const seeds = house.seeds;
-                const captureMesh = meshes_capture.find(mesh => mesh.name === 'capture-house');
-
-                trace = trace + " " + clickedMesh.name;
-
-                seeds.forEach((seed) => {
-                  // Find the sphere in the addedSpheres array by name
-                 
-                  const sphere = addedSpheres.find(s => s.name === seed.seedName);
-
-                //  console.log(sphere);
-                
-                 // console.log(`Attempt to dispose of sphere with name '${seed.seedName}':`, sphere);
-                      
-                  if (sphere && captureMesh) {
-                   // console.log(`Disposing of sphere with name '${seed.seedName}'`);
-                   //const theSphere = sphere;
-                   capturedSpheres.push(sphere);
-
-                   console.log("The captured",capturedSpheres.length)
-                    
-                    
-                    sphere.dispose();
-
-                    addSphereInsideMesh(captureMesh,seed.seedName,true);
-
-                    if (capturedSpheres.length > 24){
-
-                      const win_id = uuidv4();
-                      const winId = win_id;
-                      const winTrace = trace;
-                      const opponent_address = "0x12";
-                      const opponentAddress = ethers.utils.getAddress(opponent_address);
-                      const player_username = username;
-
-                      console.log(" You are the winner!!!")
-                    }
-                    // Remove the disposed sphere from the addedSpheres array
-                    const index = addedSpheres.indexOf(sphere);
-                    if (index !== -1) {
-                      addedSpheres.splice(index, 1);
-                    }
-                  } else {
-                    console.log(`Sphere not found with name '${seed.seedName}'`);
-                  }
-                });
-
-              }
-
-             
-
-
-              const move: Move = {
-
-                selectedHouse:house,
-                seedAdd:[seedAdded],
-                player:nextPlayer,
-                action:1,
-                progress:true,
-
-              };
-
-              // illegal move
-              if (move === null) return false;
-
-             }else{
-
-              player.nextHouse = nextMove();
-              player.originalHouse = [clickedMesh.name];
-              const nextPlayer = player_identity;
-
-              playing_next = nextPlayer;
-              setPlayerTurn(playing_next);
-
-
-
-
-              const move: Move = {
-
-                selectedHouse:house,
-                seedAdd:[seedAdded],
-                player:nextPlayer,
-                action:1,
-                progress:true,
-
-              };
-
-
-              
-
-             }
-
-              //console.log(`House ${house.houseNumber}: Position - x: ${clickedMesh.position.x}, y: ${clickedMesh.position.y}, z: ${clickedMesh.position.z}, Seed: ${house.seedNumber}`);
-            } else {
-              console.warn("House not found for clicked mesh: " + clickedMesh.name);
-            }
-
-          }
-
-
-
-          
-          const moveSpheres = (move: Move)  => {
-
-            //console.log("oppent made a move", move);
-
-            const house = houses[housesToAccess[move.selectedHouse.houseNumber - 1]]
-
-          //  console.log(house);
-
-            if (move.action===0){
-              house.seedsNumber = 0;
-
-              // console.log(`House ${house.houseNumber}: Position - x: ${clickedMesh.position.x}, y: ${clickedMesh.position.y}, z: ${clickedMesh.position.z}, Seed: ${house.seedNumber}`);
-            
-              // console.log("number of picked seeds", numberOfSeedsPicked);
-
-               const seeds = house.seeds;
+              const seeds = house.seeds;
 
               // console.log("the seeds",seeds);
 
@@ -698,87 +562,87 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
                    if (index !== -1) {
                      addedSpheres.splice(index, 1);
                    }
+                   
                  } else {
                    console.log(`Sphere not found with name '${seed.seedName}'`);
                  }
                });
 
-               const player = player_identity === 'player-1' ? playersStates['player-2'] : playersStates['player-1']
-               
-               player.onHand = house.seeds
 
-               house.seeds = [];
+              const nextMove = (current_house: string) : string[] => {
+                 
+                const indexOfCurrentHouse = housesToAccess.indexOf(current_house);
 
-               player.previouseHouse = player.nextHouse[0];
+                const indexOfNextHouse = indexOfCurrentHouse < 11 ? indexOfCurrentHouse + 1 : 0;
 
-               const nextMove = () : string[] => {
+                const house = housesToAccess[indexOfNextHouse];
+
+                return [house];
+            }
+
+
+              for (let i = 1; i <= agent_seeds_number; i++){
+
+                const selected_house_name = nextMove(current_house)[0];
+
+              
+
+                const agent_next_mesh_move = meshes.find((model) => model.name === selected_house_name);
+
+                if (agent_next_mesh_move){
+
+
+                  const house_selcted = houses[selected_house_name]
+
+                  const seedAdded = player.onHand[0];
                   
-                   const indexOfCurrentHouse = housesToAccess.indexOf(housesToAccess[move.selectedHouse.houseNumber - 1]);
-
-                   const indexOfNextHouse = indexOfCurrentHouse < 11 ? indexOfCurrentHouse + 1 : 0;
-
-                   const house = housesToAccess[indexOfNextHouse];
-
-                   return [house];
-               }
-
-
-               player.nextHouse = nextMove();
-               player.originalHouse = [housesToAccess[move.selectedHouse.houseNumber - 1]];
-               playing_next = move.player;
-               start.inprogress = true;
-               setPlayerTurn(playing_next);
-               
-
-            }else if (move.action===1){
-              const meshClicked =  meshes.find((model) => model.id === housesToAccess[house.houseNumber-1]);
-              if(meshClicked){
-
-                house.seedsNumber +=1;
-                //numberOfSeedsPicked -= 1;
-           
-
-                const player = player_identity === 'player-1' ? playersStates['player-2'] : playersStates['player-1']
+  
+                  addSphereInsideMesh(agent_next_mesh_move,player.onHand[0].seedName);
+  
+                  house_selcted.seeds.push(player.onHand[0]);
+  
+                  player.onHand.splice(0, 1);
+    
+                  player.previouseHouse = player.nextHouse[0];
 
 
-                addSphereInsideMesh(meshClicked,move.seedAdd[0].seedName);
-
-                house.seeds.push(move.seedAdd[0]);
-                player.onHand.splice(0, 1);
-
-                player.previouseHouse = player.nextHouse[0];
-
-                
-
-                const nextMove = () : string[] => {
-                   
-                    const indexOfCurrentHouse = housesToAccess.indexOf(meshClicked.name);
-
-                    const indexOfNextHouse = indexOfCurrentHouse < 11 ? indexOfCurrentHouse + 1 : 0;
-
-                    const house = housesToAccess[indexOfNextHouse];
-
-                    return [house];
                 }
 
-                if (player.onHand.length === 0){
+                if ( i === agent_seeds_number){
 
+            
+                    
                   player.nextHouse= []
                   player.originalHouse =[]
 
-                  material.diffuseColor = new Color3(0, 1, 0); // Green
+ 
+                  playing_next = "player-1";
+                  player_identity = "player-1"
+
+                  const playerIcon = document.getElementById('player-icon');
+                  if (playerIcon) {
+                    playerIcon.innerHTML =  '&#128526;';
+                  }
+
+                  console.log("this is the player playing next ", playing_next)
+
+                  start.player = playing_next ;
+                  setPlayerTurn(playing_next);
+    
+                  material.diffuseColor = new Color3(0, 1, 0);
                   material.specularColor = new Color3(1, 1, 1);
                   // box.material = material;
                   if (bulb){
                     bulb.material = material;
                   }
-
-                  const isPlayeerHouse =  playerHouses.includes(meshClicked.name);
-
-                  if (isPlayeerHouse && (house.seeds.length === 2 || house.seeds.length === 3)){
-
+    
+                  const isPlayeerHouse =  playerHouses.includes(selected_house_name);
+    
+                  if (!isPlayeerHouse && (house.seeds.length === 2 || house.seeds.length === 3)){
+    
                     const seeds = house.seeds;
-  
+                    const captureMesh = meshes_capture.find(mesh => mesh.name === 'capture-house');
+    
                     seeds.forEach((seed) => {
                       // Find the sphere in the addedSpheres array by name
                      
@@ -788,12 +652,20 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
                     
                      // console.log(`Attempt to dispose of sphere with name '${seed.seedName}':`, sphere);
                           
-                      if (sphere) {
+                      if (sphere && captureMesh) {
                        // console.log(`Disposing of sphere with name '${seed.seedName}'`);
-
+                       //const theSphere = sphere;
+                       capturedSpheres.push(sphere);
+    
+                       console.log("The captured",capturedSpheres.length)
+                        
+                        
                         sphere.dispose();
-  
+    
+                        addSphereInsideMesh(captureMesh,seed.seedName,true);
+    
                         if (capturedSpheres.length > 24){
+    
                           console.log(" You are the winner!!!")
                         }
                         // Remove the disposed sphere from the addedSpheres array
@@ -805,25 +677,27 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
                         console.log(`Sphere not found with name '${seed.seedName}'`);
                       }
                     });
-  
+    
                   }
 
-  
-                 }else{
-  
-                  player.nextHouse = nextMove();
-                  player.originalHouse = [meshClicked.name];
-  
-                 }
+                  isPlayerTurn = true;
 
-                 playing_next = move.player;
-                 setPlayerTurn(playing_next);
-                 start.inprogress = true;
-                 start.player = move.player;
+                }
+
+                current_house = selected_house_name;
+
+
 
               }
+
+              //console.log(`House ${house.houseNumber}: Position - x: ${clickedMesh.position.x}, y: ${clickedMesh.position.y}, z: ${clickedMesh.position.z}, Seed: ${house.seedNumber}`);
+            } else {
+              console.warn("House not found for clicked mesh: " + agent_house_play_choice);
             }
-        }
+
+          }
+
+
 
       // Function to check for collisions with existing spheres
       function checkSphereCollisions(newSphere: Mesh,capture: boolean = false): boolean {
@@ -872,7 +746,7 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
           scene.onPointerDown = async function (evt, pickResult) {
              
 
-            let isPlayerTurn:boolean;
+            
             console.log("Hallooooo");
             console.log("Hallooooo ",!start.inprogress);
             console.log("Hallooooo ",player_identity);
@@ -992,6 +866,7 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
               // Find the corresponding house in the houses object
               const clickedMesh: AbstractMesh = pickResult.pickedMesh;
               const house = houses[clickedMesh.name];
+              console.log("player states", playersStates);
               const isValidMove = clickedMesh.name === playersStates[player_identity].nextHouse[0];
               //console.log('how?',playersStates[player_identity].nextHouse)
               //console.log('isvalidmove',playersStates[player_identity].nextHouse[0],clickedMesh.name);
@@ -1129,7 +1004,12 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
                 const seedsNumberHouse11 = houses['house-11'].seedsNumber;
                 const seedsNumberHouse12 = houses['house-12'].seedsNumber;
 
+  
 
+                const playerIcon = document.getElementById('player-icon');
+                if (playerIcon) {
+                  playerIcon.innerHTML = '&#128125;'
+                }
                 
 
                 const state_to_agent =`{"method":"agent_move","args":{"name":"agent","board_state":{"House1":{"seeds":[${seedsHouse1}],"seeds_number":${seedsNumberHouse1}},"House2":{"seeds":[${seedsHouse2}],"seeds_number":${seedsNumberHouse2}},"House3":{"seeds":[${seedsHouse3}],"seeds_number":${seedsNumberHouse3}},"House4":{"seeds":[${seedsHouse4}],"seeds_number":${seedsNumberHouse4}},"House5":{"seeds":[${seedsHouse5}],"seeds_number":${seedsNumberHouse5}},"House6":{"seeds":[${seedsHouse6}],"seeds_number":${seedsNumberHouse6}},"House7":{"seeds":[${seedsHouse7}],"seeds_number":${seedsNumberHouse7}},"House8":{"seeds":[${seedsHouse8}],"seeds_number":${seedsNumberHouse8}},"House9":{"seeds":[${seedsHouse9}],"seeds_number":${seedsNumberHouse9}},"House10":{"seeds":[${seedsHouse10}],"seeds_number":${seedsNumberHouse10}},"House11":{"seeds":[${seedsHouse11}],"seeds_number":${seedsNumberHouse11}},"House12":{"seeds":[${seedsHouse12}],"seeds_number":${seedsNumberHouse12}}}}}`;
@@ -1237,6 +1117,8 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
                 //console.log(`House ${house.houseNumber}: Position - x: ${clickedMesh.position.x}, y: ${clickedMesh.position.y}, z: ${clickedMesh.position.z}, Seed: ${house.seedNumber}`);
               } else {
                 console.warn("House not found for clicked mesh: " + clickedMesh.name);
+                console.log(house,"--------",isValidMove)
+                console.log(playersStates[player_identity].onHand.length)
               }
             } 
           };
@@ -1265,7 +1147,7 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
         
 
       
-        return {scene, defaultSpheres,moveSpheres,playersTurn};
+        return {scene, defaultSpheres,playersTurn};
       };
 
  
@@ -1278,14 +1160,13 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
 
       useEffect(() => {
         const loadScene = async (): Promise<() => void> => {
-          const {scene:sceneCreated, defaultSpheres,moveSpheres: sceneMoveSpheres,playersTurn:player} = await createScene(canvasRef.current);
+          const {scene:sceneCreated, defaultSpheres,playersTurn:player} = await createScene(canvasRef.current);
           defaultSpheres();
           
           // Optionally, you can handle the scene instance or perform additional actions here
 
           if (sceneCreated) {
             setScene(sceneCreated);
-            setMakeAMove(() =>  sceneMoveSpheres);
             setPlayerTurn(player);
             console.log('ebu check',player);
           }
@@ -1344,10 +1225,10 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
   return (
     <>
         <div className='m-5'>
-            <a href="https://flowbite.com" className="flex items-center ">
+            <div>
                 <img src="./logo.png" className="mr-3 h-6 sm:h-9" alt="Flowbite Logo" />
                 <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Oware</span>
-            </a>
+            </div>
             <div className='pt-2'>
             <Card sx={{
               backgroundColor:'rgb(15 23 42)',
@@ -1374,22 +1255,23 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
                 </Grid>
                   ) : (
                     <>
-                    <AccountCircleIcon fontSize="large" color="primary" />
                     <Grid item>
                     <div>
                       <Typography variant="h6" color={'white'} sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        fontSize:15
-                      }}>Player: <span className='text-sky-500 px-1'>{player_identity}</span></Typography>
-                      <Typography variant="body1" color={'white'} sx={{fontSize:15
-                      }}>Room: <span className='text-sky-500 px-1'>{room}</span></Typography>
+                        marginLeft:0,
+                        fontSize:40,
+                        color:'#43a047'
+                      }}>Current Player Turn: <span className='player-icon' id='player-icon'></span></Typography>
+                      
                     </div>
                   </Grid>
 
-                <Grid container spacing={2} sx={{margin:'auto',textAlign:'center',alignItems:"center",position:'center'}} columns={16}>
+                <Grid container spacing={3} sx={{margin:'auto',textAlign:'center',alignItems:"center",position:'center',fontSize:30,color:'#f57c00',fontWeight:'bold'}} columns={16}>
+                  Your Houses: 
                   {playerHouses.map((houseName, index) => (
-                    <Grid item xs={6} sm={2} md={2} lg={2} key={index}>
+                    <Grid item xs={6} sm={2} md={0} lg={2} key={index}>
                       <Paper elevation={3} sx={{padding:1,display:'flex'}} >
                         <HouseIcon />
                         <Typography variant="h6">{houseName}</Typography>

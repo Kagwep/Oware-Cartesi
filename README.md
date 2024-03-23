@@ -23,13 +23,91 @@
 
 **Strategic Gameplay AI Agent:** This document outlines the implementation of a strategic gameplay AI agent designed to play Oware and make strategic decisions within the game.
 
-**Cartesi Rollup:** The Cartesi rollup technology offers scalability and security benefits, allowing for efficient execution of smart contracts.
+**Cartesi Rollup:** Cartesi provides the game a dedicated CPU and rollup, enhancing computational scalability while preserving decentralization, security, and censorship resistance.
 
 ## System Architecture
 
-**High-Level Overview:** The architecture includes components such as the AI agent, communication layer, and interaction with Cartesi rollup smart contracts.
+### **High-Level Overview:** 
+The architecture includes components such as the AI agent, communication layer, and interaction with Cartesi rollup.
 
-**AI Agent Component:** The AI agent may be implemented as a standalone program or integrated into a larger game engine, generating gameplay decisions based on predetermined strategies.
+The Oware game on Cartesi Rollup utilizes the two-tier architecture:
+
+### Front-End:
+This user-facing interface allows players to interact with the game. It is implemented as:
+- A web application providing a graphical user interface (UI).
+
+![Oware-front](https://res.cloudinary.com/dydj8hnhz/image/upload/v1711208751/bhes6zf39bhjg6icld0z.png)
+
+
+### Back-End (Verifiable Logic):
+This layer executes within the Cartesi Rollups infrastructure. It ensures verifiable game logic and state management:
+
+- Stores and updates the Oware game state based on user input received from the front-end.
+- Employs the deep learning model to analyze the current game state and select the optimal move for the AI opponent.
+- Generates two key outputs:
+  - Vouchers: These represent transactions that can be executed on the Ethereum mainnet (Layer 1) for permanent game state updates.
+  - Notices: These convey information like move and game updates, verifiable on Layer 1 without requiring full game state recreation.
+
+### 3. Deep Learning Model
+
+The core of the AI opponent is a deep learning model built using Keras. Refer to the companion document ([document here](https://github.com/Kagwep/Oware-Cartesi/blob/main/oware-agent/oware_logic/README.md)) for a detailed description of the model architecture, training configuration, and considerations specific to Oware.
+
+### 4. Integration with Cartesi Rollups
+
+The deep learning model resides within the verifiable logic layer on Cartesi Rollup. This ensures:
+- **Security:** Game logic and state transitions are verifiable on the Ethereum mainnet, preventing manipulation by the back-end.
+- **Scalability:** Computationally intensive tasks like model evaluation are offloaded from Layer 1, improving overall game performance.
+
+
+By combining a deep learning model with Cartesi Rollup infrastructure, the system offers a secure, scalable, and privacy-preserving platform for playing Oware with an AI opponent. The verifiable nature of the back-end logic guarantees fair gameplay while leveraging the benefits of blockchain technology.
+
+![Oware-Cartesi](https://res.cloudinary.com/dydj8hnhz/image/upload/v1711209307/chsmidef0mph8khcrdxg.png)
+
+
+### **AI Agent Component:** 
+The AI agent generates gameplay decisions based on learned strategies.
+
+The model leverages Keras library, to construct and train a neural network for effective move selection.
+
+####  Model Architecture
+
+The model employs a sequential architecture, stacking layers for information processing. Here's a breakdown of the layers:
+
+**Dense Layers:**
+Three Dense layers are used, with the number of neurons in each layer to be determined through experimentation.
+- The first layer transforms the input board state representation into a higher-dimensional space, potentially capturing features like seed counts and capture opportunities.
+- ReLU (Rectified Linear Unit) activation  for introducing non-linearity and improving model expressiveness.
+- Subsequent layers extract increasingly complex features from the game state.
+
+**Dropout Layers:**
+Dropout layers are incorporated after each Dense layer to prevent overfitting, especially when training data might be limited. A dropout rate of 10% (0.1) is the starting point.
+
+**Output Layer:**
+The final layer has a number of neurons equal to the number of valid moves possible in a given Oware state.
+- A softmax activation function . Softmax transforms the output layer's activations into a probability distribution over all possible moves. This allows the model to select the move with the highest predicted value.
+
+#### Training Configuration
+
+**Optimizer:**
+Stochastic Gradient Descent (SGD) is used for optimizing the model's weights during training. However, exploring other optimizers like Adam could potentially lead to faster convergence.
+
+**Loss Function:**
+Categorical Crossentropy loss is used. It measures the difference between the model's predicted move probabilities and the actual distribution representing the best move.
+
+
+**Training:**
+Training success depends on a large number of Oware games. Real human game data or simulated games can be utilized for this purpose. Th folder `oware-agents-models` contains some trained models.
+
+
+#### Evaluation
+
+The model's performance will be evaluated by playing against different Oware AI opponents or human players. Metrics like win rate and average game score will be used to assess its effectiveness.
+
+
+This deep learning model provides a foundation for building a strong Oware-playing agent. Through careful adjustments to hyperparameters, input representation, and potentially incorporating reinforcement learning approaches, the model can be refined to achieve a high level of strategic play in Oware.
+
+To learn more about the specific code used to create and train this model, please refer to [this document](https://github.com/Kagwep/Oware-Cartesi/blob/main/oware-agent/oware_logic/README.md).
+
 
 **Communication Layer:** Communication between the AI agent and Cartesi rollup involves protocols like message queues or RPCs to facilitate interaction.
 
