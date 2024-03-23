@@ -23,7 +23,11 @@
 
 **Strategic Gameplay AI Agent:** This document outlines the implementation of a strategic gameplay AI agent designed to play Oware and make strategic decisions within the game.
 
+## Key Technologies:
+
 **Cartesi Rollup:** Cartesi provides the game a dedicated CPU and rollup, enhancing computational scalability while preserving decentralization, security, and censorship resistance.
+
+
 
 ## System Architecture
 
@@ -109,28 +113,60 @@ This deep learning model provides a foundation for building a strong Oware-playi
 To learn more about the specific code used to create and train this model, please refer to [this document](https://github.com/Kagwep/Oware-Cartesi/blob/main/oware-agent/oware_logic/README.md).
 
 
-**Communication Layer:** Communication between the AI agent and Cartesi rollup involves protocols like message queues or RPCs to facilitate interaction.
+# Running the Oware DApp
 
-**Cartesi Rollup Integration:** The AI agent interacts with Cartesi rollup smart contracts by submitting moves, verifying game state, and managing in-game assets.
+## Prerequisites:
 
-## Technical Considerations
+Ensure you have a Cartesi Rollups environment in host mode set up and running. Refer to Cartesi documentation for specific instructions.
 
-**Security:** Encryption, authentication, and access control mechanisms are essential for ensuring secure communication between the AI agent and Cartesi rollup.
+1. Install Sunodo:
 
-**Scalability:** Considerations include communication overhead and smart contract gas costs as the system scales with more AI agents or game instances.
+   Follow the official Sunodo installation guide to install Sunodo on your system. You can find the guide at [Sunodo Installation Guide](https://docs.cartesi.io/cartesi-rollups/build-dapps/run-dapp/) (replace with the actual URL).
 
-**Latency:** Analyzing latency introduced by communication is crucial to understanding its impact on the gameplay experience.
+2. Build the DApp:
 
-## Deployment
+   Navigate to the directory containing your Oware DApp code (likely named my-app). Once there, run the following command in your terminal:
 
-**Environment Setup:** Configuration involves setting up the AI agent, communication layer, and Cartesi node for deployment.
 
-**Monitoring and Logging:** Strategies for monitoring system health and logging AI agent activity aid in debugging and analysis.
+
+        sunodo build
+
+
+
+  This command will build the DApp for deployment on the Cartesi Rollups infrastructure.
+
+3. Run the DApp:
+
+    While still in the my-app directory, execute the following command to start the DApp:
+
+    ```bash
+
+    sunodo run
+
+    ```
+
+   This will deploy and run the Oware DApp on your local Cartesi Rollups environment in host mode
+
+4. Install and Run the Front-End:
+
+Change directories to the folder containing your front-end code (likely named client).
+
+Within the client directory, install the required dependencies using npm:
+
+```bash
+
+npm install
+
+```
+Once the installation is complete, you can start the front-end server (assuming it uses a command like npm start):
+
+```bash
+
+ npm run dev
+
+```
 
 ## Conclusion
 
-This document offers a technical overview of the strategic gameplay AI agent implemented on Cartesi rollup, enabling secure and scalable deployment of AI-powered gameplay experiences.
+This document an overview of the strategic gameplay AI agent implemented on Cartesi rollup, enabling secure and scalable deployment of AI-powered gameplay experiences.
 
-## Future Work
-
-Potential optimizations for communication efficiency and latency reduction should be explored. Additionally, integrating with additional blockchain functionalities like tokenized in-game assets and implementing mechanisms for AI agent learning within the Cartesi rollup environment are areas for future investigation.
