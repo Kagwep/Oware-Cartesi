@@ -20,9 +20,9 @@ import {
 import './style.css';
 import '@babylonjs/loaders';
 import {House, houses} from './House';
-import { Seeds } from './Seed';
+import { Seed, Seeds } from './Seed';
 import { state,playersStates } from './GameState';
-import { housesToAccess } from './House';
+import { housesToAccess,housesCoordinates } from './House';
 import sphereTexture from "../Textures/nuttexture3.avif";
 import { Card, CardContent, CircularProgress, Typography, Grid ,Paper} from '@mui/material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -32,7 +32,17 @@ import HouseIcon from '@mui/icons-material/House';
 import { start } from './GameState';
 import { v4 as uuidv4 } from 'uuid';
 import { ethers } from 'ethers';
+import { JsonRpcProvider } from "@ethersproject/providers";
+import { InputBox__factory } from "@cartesi/rollups";
+import { Input,  useToast } from "@chakra-ui/react";
+import { useQuery, gql } from "@apollo/client";
+import { hexToString } from "viem"
 
+interface ButtonProps {
+  // Define the interface for buttonProps here
+  isLoading: boolean;
+  // Other properties if applicable
+}
 
 export interface Players {
   id:string;
@@ -78,6 +88,20 @@ interface Register {
 }
 
 
+// OBS: change DApp address as appropriate
+const DAPP_ADDRESS = "0x70ac08179605AF2D9e75782b8DEcDD3c22aA4D0C";
+
+// Standard configuration for local development environment
+const INPUTBOX_ADDRESS = "0x59b22D57D4f067708AB0c00552767405926dc768";
+const HARDHAT_DEFAULT_MNEMONIC =
+    "test test test test test test test test test test test junk";
+const HARDHAT_LOCALHOST_RPC_URL = "http://localhost:8545";
+
+interface OwareInputProps {
+  accountIndex: number;
+  // Other props if applicable
+}
+
 
 const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,cleanup }) => {
 
@@ -90,10 +114,12 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
     const [inProgress, setInProgress] = useState<boolean>(false);
     const [playerTurn, setPlayerTurn] = useState<string>("");
    // const { provider, account, connectWallet, disconnectWallet,contract,signer } = useWallet();
+    const [accountIndex] = useState(0);
+    const toast = useToast();
+    const [loading, setLoading] = useState(false);
 
  
     
-
     //console.log(player_identity);
     const handleCopySuccess = () => {
       setIsCopied(true);
@@ -119,6 +145,10 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
         let playing_next = player_identity;
 
         let trace = ""
+
+        let move_notices: string | any[] = []
+
+        let previous_agent_house = "";
       
         var camera = new ArcRotateCamera("camera1", 0,  0, 10, Vector3.Zero(), scene);
 
@@ -360,7 +390,274 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
             return newPosition;
           }
 
+          const agent_move = async (board_state : string)  => {
 
+            console.log("this i sthe board state that will be sent", board_state)
+
+            const sendInput = async ()  => {
+              setLoading(true);
+              // Start a connection
+              const provider = new JsonRpcProvider(HARDHAT_LOCALHOST_RPC_URL);
+              const signer = ethers.Wallet.fromMnemonic(
+                  HARDHAT_DEFAULT_MNEMONIC,
+                  `m/44'/60'/0'/0/${accountIndex}`
+              ).connect(provider);
+  
+              // Instantiate the InputBox contract
+              const inputBox = InputBox__factory.connect(
+                  INPUTBOX_ADDRESS,
+                  signer
+              );
+  
+  
+              const hardcodedPayload = board_state.toString();
+  
+              // Encode the input
+              const inputBytes = ethers.utils.toUtf8Bytes(hardcodedPayload);
+  
+  
+              // Send the transaction
+              const tx = await inputBox.addInput(DAPP_ADDRESS, inputBytes);
+              console.log(`transaction: ${tx.hash}`);
+              toast({
+                  title: "Transaction Sent",
+                  description: "waiting for confirmation",
+                  status: "success",
+                  duration: 9000,
+                  isClosable: true,
+                  position: "top-left",
+              });
+  
+              // Wait for confirmation
+              console.log("waiting for confirmation...");
+
+              try {
+                // Send the transaction and wait for confirmation
+                const receipt = await tx.wait(1);
+                
+                // Search for the InputAdded event
+                const event = receipt.events?.find((e) => e.event === "InputAdded");
+
+                setLoading(false);
+                toast({
+                    title: "Transaction Confirmed",
+                    description: `Input added => index: ${event?.args?.inputIndex} `,
+                    status: "success",
+                    duration: 9000,
+                    isClosable: true,
+                    position: "top-left",
+                });
+                console.log(`Input added => index: ${event?.args?.inputIndex} `);
+            
+                // If the transaction was successful and event was emitted, proceed with waiting and then fetching data
+                if (event) {
+                    setTimeout(async () => {
+                        try {
+                            const response = await fetch("http://localhost:8080/graphql", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: '{ "query": "{ notices { edges { node { payload } } } }" }',
+                            });
+                            
+                            const result = await response.json();
+                            
+                            // Process the fetched data
+
+                            console.log("Zotete",result.data.notices.edges)
+
+                            move_notices = result.data.notices.edges;
+
+                            // for (let edge of result.data.notices.edges) {
+                            //     let payload = edge.node.payload;
+                            //     // Do something with the payload
+
+                            //     console.log("this here is the payload",payload);
+
+                            //     const stringValue = ethers.utils.toUtf8String(payload);
+                            //     console.log(stringValue); 
+                            // }
+                        } catch (error) {
+                            console.error("Error occurred while fetching data:", error);
+                        }
+                    }, 5000); // Wait for 5 seconds (5000 milliseconds) after the event
+                } else {
+                    console.error("InputAdded event not found in transaction receipt.");
+                }
+            } catch (error) {
+                console.error("Error occurred while processing transaction:", error);
+            }
+
+
+
+          };
+
+
+          await sendInput();
+
+          }
+
+
+          const agent_play = (agent_house_play_choice :string) => {
+
+            const house = houses[agent_house_play_choice];
+
+            if (house) {
+              // Print the position and seed number of the corresponding house
+
+              const agent_seeds_on_hand = house.seeds
+
+              const meshClicked =  meshes.find((model) => model.name === housesToAccess[house.houseNumber-1]);
+              
+              house.seedsNumber = 0;
+
+              const mesh_picked_agent = 
+
+              const player = playersStates[player_identity];
+
+             // console.log("remaining seed", numberOfSeedsPicked);
+
+              addSphereInsideMesh(clickedMesh,player.onHand[0].seedName);
+
+              const seedAdded = player.onHand[0];
+
+              house.seeds.push(player.onHand[0]);
+              player.onHand.splice(0, 1);
+
+              player.previouseHouse = player.nextHouse[0];
+
+              const nextMove = () : string[] => {
+                 
+                  const indexOfCurrentHouse = housesToAccess.indexOf(clickedMesh.name);
+
+                  const indexOfNextHouse = indexOfCurrentHouse < 11 ? indexOfCurrentHouse + 1 : 0;
+
+                  const house = housesToAccess[indexOfNextHouse];
+
+                  return [house];
+              }
+
+
+             if (player.onHand.length === 0){
+
+              player.nextHouse= []
+              player.originalHouse =[]
+
+
+              const nextPlayer = player_identity === 'player-1' ? 'player-2' :'player-1';
+              
+              playing_next = nextPlayer;
+              start.player = playing_next ;
+              setPlayerTurn(playing_next);
+
+              material.diffuseColor = new Color3(1, 0, 0);
+              material.specularColor = new Color3(1, 1, 1);
+              // box.material = material;
+              if (bulb){
+                bulb.material = material;
+              }
+
+              const isPlayeerHouse =  playerHouses.includes(clickedMesh.name);
+
+              if (!isPlayeerHouse && (house.seeds.length === 2 || house.seeds.length === 3)){
+
+                const seeds = house.seeds;
+                const captureMesh = meshes_capture.find(mesh => mesh.name === 'capture-house');
+
+                trace = trace + " " + clickedMesh.name;
+
+                seeds.forEach((seed) => {
+                  // Find the sphere in the addedSpheres array by name
+                 
+                  const sphere = addedSpheres.find(s => s.name === seed.seedName);
+
+                //  console.log(sphere);
+                
+                 // console.log(`Attempt to dispose of sphere with name '${seed.seedName}':`, sphere);
+                      
+                  if (sphere && captureMesh) {
+                   // console.log(`Disposing of sphere with name '${seed.seedName}'`);
+                   //const theSphere = sphere;
+                   capturedSpheres.push(sphere);
+
+                   console.log("The captured",capturedSpheres.length)
+                    
+                    
+                    sphere.dispose();
+
+                    addSphereInsideMesh(captureMesh,seed.seedName,true);
+
+                    if (capturedSpheres.length > 24){
+
+                      const win_id = uuidv4();
+                      const winId = win_id;
+                      const winTrace = trace;
+                      const opponent_address = "0x12";
+                      const opponentAddress = ethers.utils.getAddress(opponent_address);
+                      const player_username = username;
+
+                      console.log(" You are the winner!!!")
+                    }
+                    // Remove the disposed sphere from the addedSpheres array
+                    const index = addedSpheres.indexOf(sphere);
+                    if (index !== -1) {
+                      addedSpheres.splice(index, 1);
+                    }
+                  } else {
+                    console.log(`Sphere not found with name '${seed.seedName}'`);
+                  }
+                });
+
+              }
+
+             
+
+
+              const move: Move = {
+
+                selectedHouse:house,
+                seedAdd:[seedAdded],
+                player:nextPlayer,
+                action:1,
+                progress:true,
+
+              };
+
+              // illegal move
+              if (move === null) return false;
+
+             }else{
+
+              player.nextHouse = nextMove();
+              player.originalHouse = [clickedMesh.name];
+              const nextPlayer = player_identity;
+
+              playing_next = nextPlayer;
+              setPlayerTurn(playing_next);
+
+
+
+
+              const move: Move = {
+
+                selectedHouse:house,
+                seedAdd:[seedAdded],
+                player:nextPlayer,
+                action:1,
+                progress:true,
+
+              };
+
+
+              
+
+             }
+
+              //console.log(`House ${house.houseNumber}: Position - x: ${clickedMesh.position.x}, y: ${clickedMesh.position.y}, z: ${clickedMesh.position.z}, Seed: ${house.seedNumber}`);
+            } else {
+              console.warn("House not found for clicked mesh: " + clickedMesh.name);
+            }
+
+          }
 
 
 
@@ -439,6 +736,8 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
 
                 house.seedsNumber +=1;
                 //numberOfSeedsPicked -= 1;
+           
+
                 const player = player_identity === 'player-1' ? playersStates['player-2'] : playersStates['player-1']
 
 
@@ -570,14 +869,18 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
         // console.log(modelsPromise)
         let numberOfSeedsPicked: number = 0;
 
-          scene.onPointerDown = function (evt, pickResult) {
+          scene.onPointerDown = async function (evt, pickResult) {
              
 
             let isPlayerTurn:boolean;
+            console.log("Hallooooo");
+            console.log("Hallooooo ",!start.inprogress);
+            console.log("Hallooooo ",player_identity);
 
             if (!start.inprogress && player_identity === 'player-1'){
               isPlayerTurn = true;
               start.inprogress = true;
+             
             }else if(start.inprogress && player_identity === playing_next){
               isPlayerTurn = true;
             }else{
@@ -794,6 +1097,103 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
 
                 }
 
+                // gets the seeds state -- // code should be refactored
+
+                const seedsHouse1 = (houses['house-1'].seeds || []).map((seed : Seed) => `"seed${seed.seedId}"`);
+                const seedsHouse2 = (houses['house-2'].seeds || []).map((seed : Seed) => `"seed${seed.seedId}"`);
+                const seedsHouse3 = (houses['house-3'].seeds || []).map((seed : Seed) => `"seed${seed.seedId}"`);
+                const seedsHouse4 = (houses['house-4'].seeds || []).map((seed : Seed) => `"seed${seed.seedId}"`);
+                const seedsHouse5 = (houses['house-5'].seeds || []).map((seed : Seed) => `"seed${seed.seedId}"`);
+                const seedsHouse6 = (houses['house-6'].seeds || []).map((seed : Seed) => `"seed${seed.seedId}"`);
+                const seedsHouse7 = (houses['house-7'].seeds || []).map((seed : Seed) => `"seed${seed.seedId}"`);
+                const seedsHouse8 = (houses['house-8'].seeds || []).map((seed : Seed) => `"seed${seed.seedId}"`);
+                const seedsHouse9 = (houses['house-9'].seeds || []).map((seed : Seed) => `"seed${seed.seedId}"`);
+                const seedsHouse10 = (houses['house-10'].seeds || []).map((seed : Seed) => `"seed${seed.seedId}"`);
+                const seedsHouse11 = (houses['house-11'].seeds || []).map((seed : Seed) => `"seed${seed.seedId}"`);
+                const seedsHouse12 = (houses['house-12'].seeds || []).map((seed : Seed) => `"seed${seed.seedId}"`);
+
+
+
+                // gets the seeds state -- // code should be refactored
+
+                const seedsNumberHouse1 = houses['house-1'].seedsNumber;
+                const seedsNumberHouse2 = houses['house-2'].seedsNumber;
+                const seedsNumberHouse3 = houses['house-3'].seedsNumber;
+                const seedsNumberHouse4 = houses['house-4'].seedsNumber;
+                const seedsNumberHouse5 = houses['house-5'].seedsNumber;
+                const seedsNumberHouse6 = houses['house-6'].seedsNumber;
+                const seedsNumberHouse7 = houses['house-7'].seedsNumber;
+                const seedsNumberHouse8 = houses['house-8'].seedsNumber;
+                const seedsNumberHouse9 = houses['house-9'].seedsNumber;
+                const seedsNumberHouse10 = houses['house-10'].seedsNumber;
+                const seedsNumberHouse11 = houses['house-11'].seedsNumber;
+                const seedsNumberHouse12 = houses['house-12'].seedsNumber;
+
+
+                
+
+                const state_to_agent =`{"method":"agent_move","args":{"name":"agent","board_state":{"House1":{"seeds":[${seedsHouse1}],"seeds_number":${seedsNumberHouse1}},"House2":{"seeds":[${seedsHouse2}],"seeds_number":${seedsNumberHouse2}},"House3":{"seeds":[${seedsHouse3}],"seeds_number":${seedsNumberHouse3}},"House4":{"seeds":[${seedsHouse4}],"seeds_number":${seedsNumberHouse4}},"House5":{"seeds":[${seedsHouse5}],"seeds_number":${seedsNumberHouse5}},"House6":{"seeds":[${seedsHouse6}],"seeds_number":${seedsNumberHouse6}},"House7":{"seeds":[${seedsHouse7}],"seeds_number":${seedsNumberHouse7}},"House8":{"seeds":[${seedsHouse8}],"seeds_number":${seedsNumberHouse8}},"House9":{"seeds":[${seedsHouse9}],"seeds_number":${seedsNumberHouse9}},"House10":{"seeds":[${seedsHouse10}],"seeds_number":${seedsNumberHouse10}},"House11":{"seeds":[${seedsHouse11}],"seeds_number":${seedsNumberHouse11}},"House12":{"seeds":[${seedsHouse12}],"seeds_number":${seedsNumberHouse12}}}}}`;
+
+                await agent_move(state_to_agent);
+
+                let a_move;
+              
+
+                setTimeout(() => {
+                  
+                  if (move_notices.length > 0) {
+                      const new_agent_move = move_notices[move_notices.length - 1];
+                      a_move = hexToString(new_agent_move.node.payload);
+                  } else {
+                      a_move = previous_agent_house;
+                  }
+                  // Your entire block of code here, which will be executed after the delay
+                  console.log("a_move:", a_move);
+
+                  if (a_move != "" || a_move != previous_agent_house){
+
+                    const dataString = a_move;
+  
+                      // Regular expression to match the coordinates (x, y)
+                      const regex = /\((\d+), (\d+)\)/;
+  
+                      // Match the regex with the data string
+                      const match = dataString.match(regex);
+  
+                      if (match) {
+                          // Extract the first and second coordinates from the match
+                          const coordinateX = parseInt(match[1]);
+                          const coordinateY = parseInt(match[2]);
+                          
+                          // Log the coordinates
+                          // console.log("Coordinates:", coordinateX, coordinateY);
+
+                          const coordinateKey = `${coordinateX},${coordinateY}`;
+
+                          // console.log(" tye    sd ", coordinateKey );
+
+                          const selected_house = housesCoordinates[coordinateKey]
+
+                          agent_play(selected_house);
+                          
+
+                          // console.log("The slected house ", selected_house)
+
+                      } else {
+                          console.log("Coordinates not found.");
+                      }
+  
+                  }else{
+                    console.log(" Agent is making move .....")
+                  }     
+
+                  
+
+              }, 5100);
+
+               
+
+
                 const move: Move = {
 
                   selectedHouse:house,
@@ -806,6 +1206,7 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
 
                 // illegal move
                 if (move === null) return false;
+
                }else{
 
                 player.nextHouse = nextMove();
@@ -916,14 +1317,10 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
         if (!isWaitingForOpponent && !inProgress) {
           let newPlayerHouses, newPlayerTurn;
     
-          if (player_identity === 'player-1') {
+
             newPlayerHouses = housesToAccess.slice(0, 6);
-            newPlayerTurn = player_identity;
-          } else {
-            newPlayerHouses = housesToAccess.slice(6, 12);
             newPlayerTurn = 'player-1';
-          }
-    
+
           // Update playerHouses only if it has changed
           if (JSON.stringify(newPlayerHouses) !== JSON.stringify(playerHouses)) {
             setPlayerHouses(newPlayerHouses);
@@ -936,7 +1333,14 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
         }
       }, [isWaitingForOpponent, inProgress, player_identity, housesToAccess, playerHouses, playerTurn]);
 
+      let buttonProps:ButtonProps = {
+        isLoading: false
+    };
 
+    if (loading) {
+        buttonProps.isLoading = true;
+    }
+    
   return (
     <>
         <div className='m-5'>
@@ -977,7 +1381,7 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
                         display: 'flex',
                         alignItems: 'center',
                         fontSize:15
-                      }}>Player: <span className='text-sky-500 px-1'>{username}</span></Typography>
+                      }}>Player: <span className='text-sky-500 px-1'>{player_identity}</span></Typography>
                       <Typography variant="body1" color={'white'} sx={{fontSize:15
                       }}>Room: <span className='text-sky-500 px-1'>{room}</span></Typography>
                     </div>
@@ -992,7 +1396,11 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
                       </Paper>
                     </Grid>
                   ))}
-                </Grid>  
+                </Grid> 
+{/* 
+                <Button {...buttonProps} type="submit" color="success">
+                  🤖
+                </Button>  */}
 
                   </>
                   )}

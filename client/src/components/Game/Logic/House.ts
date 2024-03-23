@@ -29,4 +29,22 @@ export interface House {
   };
 
 export const housesToAccess:string[] = ['house-1', 'house-2', 'house-3', 'house-4', 'house-5', 'house-6', 'house-7', 'house-8', 'house-9', 'house-10', 'house-11', 'house-12'];
-  
+
+export interface HouseMap {
+  [key: string]: string;
+}
+
+export const housesCoordinates: HouseMap = {
+  '0,0': 'House-7',
+  '0,1': 'House-8',
+  '0,2': 'House-9',
+  '0,3': 'House-10',
+  '0,4': 'House-11',
+  '0,5': 'House-12',
+  '1,0': 'House-1',
+  '1,1': 'House-2',
+  '1,2': 'House-3',
+  '1,3': 'House-4',
+  '1,4': 'House-5',
+  '1,5': 'House-6',
+};

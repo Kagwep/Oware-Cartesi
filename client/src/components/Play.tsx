@@ -99,6 +99,7 @@ function OwareInput() {
     if (loading) {
         buttonProps.isLoading = true;
     }
+    
     return (
         <div>
             <img className="monster" src="/monster.jpg" alt="monster" />

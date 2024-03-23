@@ -9,7 +9,7 @@ const LaunchGame = () => {
   const [room, setRoom] = useState("");
   const [orientation, setOrientation] = useState("");
   const [players, setPlayers] = useState<Players[]>([]);
-  const [players_identity, setPlayersIdentity] = useState<string>("");
+  const [players_identity, setPlayersIdentity] = useState<string>("player-1");
 
   const cleanup = useCallback(() => {
     setRoom("");

@@ -96,8 +96,10 @@ def handle_advance(data,model):
 
             logger.info("The agents move is: %s", agent_oware_move)
 
+
+
             
-            agent_oware_move = str([agent_oware_move])
+            agent_oware_move = str(agent_oware_move)
 
             url = rollup_server + "/notice"
             hex_result = binascii.hexlify(json.dumps({"moves": agent_oware_move}).encode()).decode()
