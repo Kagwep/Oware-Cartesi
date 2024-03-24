@@ -19,7 +19,7 @@ logger.info(f"HTTP rollup_server url is {rollup_server}")
 
 agent_moves = OwareMoves()
 
-model = tflite.Interpreter(model_path="./model/oware-model.tflite")
+model = tflite.Interpreter(model_path="./model/oware-model-800.tflite")
 
 game_houses =  Houses()
 

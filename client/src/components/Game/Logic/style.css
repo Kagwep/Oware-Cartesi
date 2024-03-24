@@ -182,3 +182,35 @@
     }
   } */
   
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    border: 1px solid rgb(83, 83, 83); /* Add border to the table */
+    
+}
+
+td {
+  text-align: center;
+}
+
+th, td {
+    border: 2px solid rgb(95, 95, 95);
+    text-align: center;
+    padding: 10; /* Remove padding from th and td */
+    border-radius: 10px;
+}
+
+th > div, td > div {
+    border-radius: 50%; /* Apply border radius to the div containing the number */
+    width: 30px; /* Set width for the div */
+    height: 30px; /* Set height for the div */
+    text-align: center;
+}
+
+th > div {
+    background-color: #FFA500; /* Greyish orange background for the first row's cells */
+}
+
+tr:nth-child(2) > td > div {
+    background-color: green; /* Green background for the second row's cells */
+}

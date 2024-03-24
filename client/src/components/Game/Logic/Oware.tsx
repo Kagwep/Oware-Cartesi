@@ -210,20 +210,19 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
         const {meshes:meshes_capture} = await loadModels('captur.gltf');
         const {meshes:bulbMeshes} = await loadModels('bulb.gltf');
         // Now modelsResult contains the result directly
-        console.log(meshes_capture);
+        // console.log(meshes_capture);
 
-        console.log(meshes)
-       
+   
 
         const rootMesh = meshes_capture.find(mesh => mesh.name === '__root__');
 
         const bulb = bulbMeshes.find(mesh => mesh.name === 'bulb');
 
-        if (bulb) {
-          console.log('here is the bulb',bulb);
-        }else{
-          console.log('bulb not found')
-        }
+        // if (bulb) {
+        //   console.log('here is the bulb',bulb);
+        // }else{
+        //   console.log('bulb not found')
+        // }
 
         if (rootMesh) {
           // Example: Move the root mesh to a specific position
@@ -744,12 +743,7 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
         let numberOfSeedsPicked: number = 0;
 
           scene.onPointerDown = async function (evt, pickResult) {
-             
-
             
-            console.log("Hallooooo");
-            console.log("Hallooooo ",!start.inprogress);
-            console.log("Hallooooo ",player_identity);
 
             if (!start.inprogress && player_identity === 'player-1'){
               isPlayerTurn = true;
@@ -1030,8 +1024,6 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
                   // Your entire block of code here, which will be executed after the delay
                   console.log("a_move:", a_move);
 
-                  if (a_move != "" || a_move != previous_agent_house){
-
                     const dataString = a_move;
   
                       // Regular expression to match the coordinates (x, y)
@@ -1063,10 +1055,6 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
                           console.log("Coordinates not found.");
                       }
   
-                  }else{
-                    console.log(" Agent is making move .....")
-                  }     
-
                   
 
               }, 5100);
@@ -1226,8 +1214,24 @@ const Canvas:React.FC<CanvasProps> = ({ players, room,username,player_identity,c
     <>
         <div className='m-5'>
             <div>
-                <img src="./logo.png" className="mr-3 h-6 sm:h-9" alt="Flowbite Logo" />
-                <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Oware</span>
+            <table>
+              <tr>
+                <th><div>12</div></th>
+                <th><div>11</div></th>
+                <th><div>10</div></th>
+                <th><div>9</div></th>
+                <th><div>8</div></th>
+                <th><div>7</div></th>
+              </tr>
+              <tr>
+                <td><div>1</div></td>
+                <td><div>2</div></td>
+                <td><div>3</div></td>
+                <td><div>4</div></td>
+                <td><div>5</div></td>
+                <td><div>6</div></td>
+              </tr>
+            </table>
             </div>
             <div className='pt-2'>
             <Card sx={{

@@ -25,8 +25,23 @@
 
 ## Key Technologies:
 
-**Cartesi Rollup:** Cartesi provides the game a dedicated CPU and rollup, enhancing computational scalability while preserving decentralization, security, and censorship resistance.
+## Front-End (React & Vite):
 
+- Built with React for a user-friendly interface.
+
+## Game Board (Blender & Babylon.js):
+
+- Blender: A free and open-source 3D modeling software used to create  custom models for the Oware game board. 
+- Babylon.js: 3D and WebGL engine to render the game board within the web browser.
+
+## Back-End & Security (Cartesi Rollups & Docker):
+
+- Cartesi Rollups:
+- Docker
+
+## AI Opponent (Deep Learning):
+
+Integrates a pre-trained deep learning model to create a strategic AI opponent that challenges players.
 
 
 ## System Architecture
@@ -40,7 +55,7 @@ The Oware game on Cartesi Rollup utilizes the two-tier architecture:
 This user-facing interface allows players to interact with the game. It is implemented as:
 - A web application providing a graphical user interface (UI).
 
-![Oware-front](https://res.cloudinary.com/dydj8hnhz/image/upload/v1711208751/bhes6zf39bhjg6icld0z.png)
+![Oware-front](https://res.cloudinary.com/dydj8hnhz/image/upload/v1711275116/doatjl4lywgtluvyvf81.png)
 
 
 ### Back-End (Verifiable Logic):
